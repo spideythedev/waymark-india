@@ -1207,3 +1207,45 @@ form label {
   }
 }
 
+.error-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 25px;
+  background: #fafbf9;
+  color: #202820;
+}
+
+.error-content {
+  width: min(100%, 540px);
+}
+
+.error-content > svg {
+  color: #b76b42;
+  margin-bottom: 25px;
+}
+
+.error-content h1 {
+  margin: 15px 0;
+  font-size: clamp(30px, 5vw, 45px);
+  letter-spacing: -1.8px;
+}
+
+.error-content p {
+  color: #777;
+  line-height: 1.8;
+  margin-bottom: 25px;
+}
+
+.error-details {
+  margin-top: 25px;
+  padding: 16px;
+  background: #f0efec;
+  border-radius: 9px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  color: #9b4141;
+}
+
