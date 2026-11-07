@@ -4,6 +4,26 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+match /courses/{recordId} {
+  allow read: if resource.data.status == "verified";
+  allow write: if false;
+}
+
+match /institutions/{recordId} {
+  allow read: if resource.data.status == "verified";
+  allow write: if false;
+}
+
+match /scholarships/{recordId} {
+  allow read: if resource.data.status == "verified";
+  allow write: if false;
+}
+
+match /entranceExams/{recordId} {
+  allow read: if resource.data.status == "verified";
+  allow write: if false;
+}
+
     match /users/{userId} {
       allow read: if request.auth != null
         && request.auth.uid == userId;
