@@ -1,5 +1,4 @@
 import {
-  uid,
   doc,
   getDoc,
   setDoc,
@@ -48,6 +47,7 @@ export async function saveStudentProfile(uid, profile) {
   const userRef = doc(db, "users", uid);
 
   const payload = {
+    uid,
     educationLevel: profile.educationLevel,
     classStandard: profile.classStandard?.trim() || null,
     stream: profile.stream || null,
