@@ -1,4 +1,5 @@
 import {
+  uid,
   doc,
   getDoc,
   setDoc,
