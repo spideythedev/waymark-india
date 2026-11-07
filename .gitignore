@@ -1,7 +1,27 @@
+# Dependencies
+node_modules/
+functions/node_modules/
 
-node_modules
-dist
+# Build output
+dist/
+build/
+
+# Environment variables
 .env
-.env.local
-.env.*.local
-functions/node_modules
+.env.*
+!.env.example
+
+# Firebase local files
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Logs
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
