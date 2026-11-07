@@ -11,7 +11,11 @@ import {
   GraduationCap,
   Sparkles,
   LogOut,
-  LoaderCircle
+  LoaderCircle,
+  MapPin,
+  Target,
+  BookOpen,
+  RefreshCw
 } from "lucide-react";
 
 import { db } from "./api/firebase";
@@ -35,16 +39,246 @@ import {
 
 import Onboarding from "./components/Onboarding";
 
-
 const features = [
-  "Explore thousands of educational pathways",
+  "Explore educational pathways",
   "Discover institutions and opportunities",
   "Build your personal academic roadmap"
 ];
 
+async function syncUserProfile(user) {
+  const userRef = doc(db, "users", user.uid);
+  const snapshot = await getDoc(userRef);
+
+  const userData = {
+    uid: user.uid,
+    email: user.email || null,
+    phoneNumber: user.phoneNumber || null,
+    displayName: user.displayName || null,
+    photoURL: user.photoURL || null,
+    lastLoginAt: serverTimestamp()
+  };
+
+  if (!snapshot.exists()) {
+    userData.createdAt = serverTimestamp();
+  }
+
+  await setDoc(userRef, userData, { merge: true });
+
+  const updated = await getDoc(userRef);
+  return updated.data();
+}
+
+function LoadingScreen({ message = "Preparing your WAYMARK experience..." }) {
+  return (
+    <main className="dashboard">
+      <div className="welcome">
+        <LoaderCircle className="spin" size={30} />
+        <p>{message}</p>
+      </div>
+    </main>
+  );
+}
+
+function ProfileError({ onRetry, onLogout }) {
+  return (
+    <main className="dashboard">
+      <header className="topbar">
+        <a className="brand" href="/">
+          <span className="brand-mark">W</span>
+          WAYMARK
+        </a>
+
+        <button className="icon-button" onClick={onLogout}>
+          <LogOut size={17} />
+          Sign out
+        </button>
+      </header>
+
+      <section className="welcome">
+        <span className="eyebrow">PROFILE SYNCHRONIZATION</span>
+        <h1>Something went wrong.</h1>
+        <p>
+          Your account is authenticated, but we couldn't load
+          your student profile.
+        </p>
+
+        <button className="primary-button" onClick={onRetry}>
+          <RefreshCw size={17} />
+          Try again
+        </button>
+      </section>
+    </main>
+  );
+}
+
+function StudentDashboard({ user, profile, onLogout }) {
+  const name =
+    profile?.displayName ||
+    user.displayName ||
+    user.email?.split("@")[0] ||
+    "Student";
+
+  const educationLevel = profile?.educationLevel
+    ? profile.educationLevel.replaceAll("-", " ")
+    : "Not specified";
+
+  return (
+    <main className="dashboard">
+      <header className="topbar">
+        <a className="brand" href="/">
+          <span className="brand-mark">W</span>
+          WAYMARK
+        </a>
+
+        <button
+          className="icon-button"
+          onClick={onLogout}
+        >
+          <LogOut size={17} />
+          Sign out
+        </button>
+      </header>
+
+      <section className="welcome">
+        <span className="eyebrow">YOUR EDUCATION. YOUR DIRECTION.</span>
+
+        <h1>
+          Welcome, <span>{name}.</span>
+        </h1>
+
+        <p>
+          Your next opportunity starts with understanding
+          what's possible.
+        </p>
+
+        <div className="profile-panel">
+          {user.photoURL ? (
+            <img
+              className="avatar"
+              src={user.photoURL}
+              alt=""
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="avatar avatar-placeholder">
+              {name.charAt(0).toUpperCase()}
+            </div>
+          )}
+
+          <div className="profile-details">
+            <strong>{name}</strong>
+            <p>{user.email || user.phoneNumber || "WAYMARK student"}</p>
+            <small>Student profile synchronized</small>
+          </div>
+
+          <ShieldCheck className="verified-icon" />
+        </div>
+
+        <div className="dashboard-links">
+          <article>
+            <Compass />
+            <h3>Explore</h3>
+            <p>Discover educational possibilities and pathways.</p>
+          </article>
+
+          <article>
+            <GraduationCap />
+            <h3>Education</h3>
+            <p>Understand your academic position and next steps.</p>
+          </article>
+
+          <article>
+            <Sparkles />
+            <h3>Guidance</h3>
+            <p>Make informed decisions about your future.</p>
+          </article>
+        </div>
+
+        <section className="student-overview">
+          <div className="section-heading">
+            <span className="eyebrow">YOUR STUDENT IDENTITY</span>
+            <h2>Your academic profile</h2>
+          </div>
+
+          <div className="overview-grid">
+            <article>
+              <GraduationCap size={20} />
+              <span>Education level</span>
+              <strong>{educationLevel}</strong>
+            </article>
+
+            <article>
+              <BookOpen size={20} />
+              <span>Interests</span>
+              <strong>{profile.interests?.length || 0} selected</strong>
+            </article>
+
+            <article>
+              <Target size={20} />
+              <span>Goals</span>
+              <strong>{profile.goals?.length || 0} selected</strong>
+            </article>
+
+            <article>
+              <MapPin size={20} />
+              <span>Preferred locations</span>
+              <strong>{profile.preferredStates?.length || 0} selected</strong>
+            </article>
+          </div>
+
+          {profile.stream && (
+            <p className="profile-extra">
+              <strong>Academic stream:</strong> {profile.stream}
+            </p>
+          )}
+
+          {profile.interests?.length > 0 && (
+            <div className="profile-extra">
+              <strong>Your interests</strong>
+              <p>{profile.interests.join(" · ")}</p>
+            </div>
+          )}
+
+          {profile.goals?.length > 0 && (
+            <div className="profile-extra">
+              <strong>Your goals</strong>
+              <p>{profile.goals.join(" · ")}</p>
+            </div>
+          )}
+
+          {profile.preferredStates?.length > 0 && (
+            <div className="profile-extra">
+              <strong>Preferred states</strong>
+              <p>{profile.preferredStates.join(" · ")}</p>
+            </div>
+          )}
+        </section>
+
+        <section className="catalogue-status">
+          <span className="eyebrow">WAYMARK INTELLIGENCE</span>
+          <h2>Discover what comes next.</h2>
+          <p>
+            Your student profile is ready. Verified courses,
+            institutions, scholarships and opportunities will
+            appear as the official catalogue is populated.
+          </p>
+          <small>
+            WAYMARK only treats records marked as verified
+            as confirmed educational information.
+          </small>
+        </section>
+      </section>
+    </main>
+  );
+}
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState(false);
+
   const [mode, setMode] = useState("email");
   const [step, setStep] = useState("identify");
 
@@ -57,40 +291,45 @@ export default function App() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    return observeAuth(async (currentUser) => {
+    let active = true;
+
+    const unsubscribe = observeAuth(async (currentUser) => {
+      if (!active) return;
+
       setUser(currentUser);
+      setProfile(null);
+      setProfileError(false);
 
       if (!currentUser) {
-        setProfile(null);
+        setProfileLoading(false);
         return;
       }
 
+      setProfileLoading(true);
+
       try {
-        const userRef = doc(db, "users", currentUser.uid);
-        const snapshot = await getDoc(userRef);
+        const studentProfile = await syncUserProfile(currentUser);
 
-        const userData = {
-          uid: currentUser.uid,
-          email: currentUser.email || null,
-          phoneNumber: currentUser.phoneNumber || null,
-          displayName: currentUser.displayName || null,
-          photoURL: currentUser.photoURL || null,
-          lastLoginAt: serverTimestamp()
-        };
+        if (!active) return;
 
-        if (!snapshot.exists()) {
-          userData.createdAt = serverTimestamp();
-        }
-
-        await setDoc(userRef, userData, { merge: true });
-
-        const updated = await getDoc(userRef);
-        setProfile(updated.data());
+        setProfile(studentProfile);
       } catch (err) {
-        console.error("Profile sync failed:", err);
-        setError("Signed in, but profile synchronization failed.");
+        console.error("Profile synchronization failed:", err);
+
+        if (active) {
+          setProfileError(true);
+        }
+      } finally {
+        if (active) {
+          setProfileLoading(false);
+        }
       }
     });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   function clearMessages() {
@@ -98,16 +337,15 @@ export default function App() {
     setMessage("");
   }
 
-  async function execute(action, successMessage) {
+  async function execute(action) {
     setLoading(true);
     clearMessages();
 
     try {
       await action();
-      if (successMessage) setMessage(successMessage);
     } catch (err) {
       console.error(err);
-      setError(err.message || "Something went wrong.");
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -120,7 +358,7 @@ export default function App() {
     }
 
     execute(async () => {
-      await requestEmailOtp(email);
+      await requestEmailOtp(email.trim());
       setStep("verify");
       setMessage("Verification code sent to your email.");
     });
@@ -142,7 +380,7 @@ export default function App() {
     }
 
     execute(async () => {
-      await requestPhoneOtp(phone);
+      await requestPhoneOtp(phone.trim());
       setStep("verify");
       setMessage("SMS verification code sent.");
     });
@@ -161,12 +399,14 @@ export default function App() {
     execute(() => signInGoogle());
   }
 
-  function signOutUser() {
-    execute(async () => {
+  async function signOutUser() {
+    await execute(async () => {
       await logout();
-      setStep("identify");
+
+      setProfile(null);
       setCode("");
-      setMessage("");
+      setStep("identify");
+      clearMessages();
     });
   }
 
@@ -177,77 +417,61 @@ export default function App() {
     setCode("");
   }
 
+  async function retryProfileSync() {
+    if (!user) return;
+
+    setProfileLoading(true);
+    setProfileError(false);
+
+    try {
+      const studentProfile = await syncUserProfile(user);
+      setProfile(studentProfile);
+    } catch (err) {
+      console.error("Profile retry failed:", err);
+      setProfileError(true);
+    } finally {
+      setProfileLoading(false);
+    }
+  }
+
+  // Authenticated application
+
   if (user) {
+    if (profileLoading) {
+      return <LoadingScreen />;
+    }
+
+    if (profileError || !profile) {
+      return (
+        <ProfileError
+          onRetry={retryProfileSync}
+          onLogout={signOutUser}
+        />
+      );
+    }
+
+    if (!profile.onboardingCompleted) {
+      return (
+        <Onboarding
+          user={user}
+          onComplete={(savedProfile) => {
+            setProfile(savedProfile);
+            clearMessages();
+          }}
+        />
+      );
+    }
+
     return (
-      <main className="dashboard">
-        <header className="topbar">
-          <a className="brand" href="/">
-            <span className="brand-mark">W</span>
-            WAYMARK
-          </a>
-
-          <button className="icon-button" onClick={signOutUser}>
-            <LogOut size={17} />
-            Sign out
-          </button>
-        </header>
-
-        <section className="welcome">
-          <span className="eyebrow">YOUR JOURNEY STARTS HERE</span>
-          <h1>
-            Welcome to <span>WAYMARK.</span>
-          </h1>
-          <p>
-            Your identity is verified. Now let's discover
-            where your education can take you.
-          </p>
-
-          <div className="profile-panel">
-            {user.photoURL && (
-              <img
-                className="avatar"
-                src={user.photoURL}
-                alt=""
-              />
-            )}
-
-            <div>
-              <strong>{user.displayName || "Student"}</strong>
-              <p>{user.email || user.phoneNumber}</p>
-              <small>
-                {profile ? "Profile synchronized" : "Loading profile..."}
-              </small>
-            </div>
-            <ShieldCheck className="verified-icon" />
-          </div>
-
-          <div className="dashboard-links">
-            <article>
-              <Compass />
-              <h3>Discover</h3>
-              <p>Explore education opportunities.</p>
-            </article>
-
-            <article>
-              <GraduationCap />
-              <h3>My education</h3>
-              <p>Build your academic roadmap.</p>
-            </article>
-
-            <article>
-              <Sparkles />
-              <h3>Guidance</h3>
-              <p>Make informed decisions.</p>
-            </article>
-          </div>
-
-          <p className="coming-note">
-            Your WAYMARK workspace is being prepared.
-          </p>
-        </section>
-      </main>
+      <StudentDashboard
+        user={user}
+        profile={profile}
+        onLogout={signOutUser}
+      />
     );
   }
+
+  // Authentication application
 
   return (
     <main className="auth-layout">
@@ -318,6 +542,7 @@ export default function App() {
             <>
               <div className="auth-tabs">
                 <button
+                  type="button"
                   className={mode === "email" ? "active" : ""}
                   onClick={() => changeMode("email")}
                 >
@@ -326,6 +551,7 @@ export default function App() {
                 </button>
 
                 <button
+                  type="button"
                   className={mode === "phone" ? "active" : ""}
                   onClick={() => changeMode("phone")}
                 >
@@ -336,54 +562,66 @@ export default function App() {
 
               {mode === "email" ? (
                 <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
+                  onSubmit={(event) => {
+                    event.preventDefault();
                     sendEmailCode();
                   }}
                 >
                   <label htmlFor="email">Email address</label>
+
                   <div className="input-wrap">
                     <Mail size={18} />
+
                     <input
                       id="email"
                       type="email"
                       autoComplete="email"
                       placeholder="you@example.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(event) => setEmail(event.target.value)}
                       required
                     />
                   </div>
 
-                  <button className="primary-button" disabled={loading}>
-                    {loading ? <LoaderCircle className="spin" /> : null}
+                  <button
+                    type="submit"
+                    className="primary-button"
+                    disabled={loading}
+                  >
+                    {loading && <LoaderCircle className="spin" />}
                     Send verification code
                     {!loading && <ArrowRight size={17} />}
                   </button>
                 </form>
               ) : (
                 <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
+                  onSubmit={(event) => {
+                    event.preventDefault();
                     sendPhoneCode();
                   }}
                 >
                   <label htmlFor="phone">Phone number</label>
+
                   <div className="input-wrap">
                     <Smartphone size={18} />
+
                     <input
                       id="phone"
                       type="tel"
                       autoComplete="tel"
                       placeholder="+91 9876543210"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(event) => setPhone(event.target.value)}
                       required
                     />
                   </div>
 
-                  <button className="primary-button" disabled={loading}>
-                    {loading ? <LoaderCircle className="spin" /> : null}
+                  <button
+                    type="submit"
+                    className="primary-button"
+                    disabled={loading}
+                  >
+                    {loading && <LoaderCircle className="spin" />}
                     Send SMS code
                     {!loading && <ArrowRight size={17} />}
                   </button>
@@ -395,6 +633,7 @@ export default function App() {
               </div>
 
               <button
+                type="button"
                 className="google-button"
                 onClick={googleLogin}
                 disabled={loading}
@@ -407,18 +646,21 @@ export default function App() {
 
           {step === "verify" && (
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
+              onSubmit={(event) => {
+                event.preventDefault();
 
                 mode === "email"
                   ? verifyEmailCode()
                   : verifyPhoneCode();
               }}
             >
-              <label htmlFor="code">Six-digit verification code</label>
+              <label htmlFor="code">
+                Six-digit verification code
+              </label>
 
               <div className="input-wrap code-input">
                 <ShieldCheck size={18} />
+
                 <input
                   id="code"
                   type="text"
@@ -427,15 +669,19 @@ export default function App() {
                   maxLength={6}
                   placeholder="000000"
                   value={code}
-                  onChange={(e) =>
-                    setCode(e.target.value.replace(/\D/g, ""))
+                  onChange={(event) =>
+                    setCode(event.target.value.replace(/\D/g, ""))
                   }
                   required
                 />
               </div>
 
-              <button className="primary-button" disabled={loading}>
-                {loading ? <LoaderCircle className="spin" /> : null}
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={loading}
+              >
+                {loading && <LoaderCircle className="spin" />}
                 Verify and continue
                 {!loading && <ArrowRight size={17} />}
               </button>
