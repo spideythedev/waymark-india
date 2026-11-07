@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
@@ -38,6 +37,8 @@ import {
 } from "firebase/firestore";
 
 import Onboarding from "./components/Onboarding";
+
+import IntelligenceDashboard from "./components/IntelligenceDashboard";
 
 const features = [
   "Explore educational pathways",
