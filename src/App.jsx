@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ArrowRight,
   ArrowLeft,
@@ -6,18 +6,8 @@ import {
   Smartphone,
   Chrome,
   ShieldCheck,
-  Compass,
-  GraduationCap,
-  Sparkles,
-  LogOut,
-  LoaderCircle,
-  MapPin,
-  Target,
-  BookOpen,
-  RefreshCw
+  LoaderCircle
 } from "lucide-react";
-
-import { db } from "./api/firebase";
 
 import {
   observeAuth,
@@ -30,14 +20,10 @@ import {
 } from "./api/auth";
 
 import {
-  doc,
-  getDoc,
-  setDoc,
-  serverTimestamp
-} from "firebase/firestore";
+  getStudentProfile
+} from "./api/profile";
 
 import Onboarding from "./components/Onboarding";
-
 import IntelligenceDashboard from "./components/IntelligenceDashboard";
 
 const features = [
@@ -46,30 +32,7 @@ const features = [
   "Build your personal academic roadmap"
 ];
 
-async function syncUserProfile(user) {
-  const userRef = doc(db, "users", user.uid);
-  const snapshot = await getDoc(userRef);
-
-  const userData = {
-    uid: user.uid,
-    email: user.email || null,
-    phoneNumber: user.phoneNumber || null,
-    displayName: user.displayName || null,
-    photoURL: user.photoURL || null,
-    lastLoginAt: serverTimestamp()
-  };
-
-  if (!snapshot.exists()) {
-    userData.createdAt = serverTimestamp();
-  }
-
-  await setDoc(userRef, userData, { merge: true });
-
-  const updated = await getDoc(userRef);
-  return updated.data();
-}
-
-function LoadingScreen({ message = "Preparing your WAYMARK experience..." }) {
+function LoadingScreen({ message }) {
   return (
     <main className="dashboard">
       <div className="welcome">
@@ -90,184 +53,22 @@ function ProfileError({ onRetry, onLogout }) {
         </a>
 
         <button className="icon-button" onClick={onLogout}>
-          <LogOut size={17} />
           Sign out
         </button>
       </header>
 
       <section className="welcome">
         <span className="eyebrow">PROFILE SYNCHRONIZATION</span>
-        <h1>Something went wrong.</h1>
+        <h1>We couldn't load your profile.</h1>
         <p>
-          Your account is authenticated, but we couldn't load
-          your student profile.
+          Your sign-in succeeded, but your student profile
+          could not be retrieved. Check your connection and retry.
         </p>
 
         <button className="primary-button" onClick={onRetry}>
-          <RefreshCw size={17} />
+          <ArrowRight size={17} />
           Try again
         </button>
-      </section>
-    </main>
-  );
-}
-
-function StudentDashboard({ user, profile, onLogout }) {
-  const name =
-    profile?.displayName ||
-    user.displayName ||
-    user.email?.split("@")[0] ||
-    "Student";
-
-  const educationLevel = profile?.educationLevel
-    ? profile.educationLevel.replaceAll("-", " ")
-    : "Not specified";
-
-  return (
-    <main className="dashboard">
-      <header className="topbar">
-        <a className="brand" href="/">
-          <span className="brand-mark">W</span>
-          WAYMARK
-        </a>
-
-        <button
-          className="icon-button"
-          onClick={onLogout}
-        >
-          <LogOut size={17} />
-          Sign out
-        </button>
-      </header>
-
-      <section className="welcome">
-        <span className="eyebrow">YOUR EDUCATION. YOUR DIRECTION.</span>
-
-        <h1>
-          Welcome, <span>{name}.</span>
-        </h1>
-
-        <p>
-          Your next opportunity starts with understanding
-          what's possible.
-        </p>
-
-        <div className="profile-panel">
-          {user.photoURL ? (
-            <img
-              className="avatar"
-              src={user.photoURL}
-              alt=""
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="avatar avatar-placeholder">
-              {name.charAt(0).toUpperCase()}
-            </div>
-          )}
-
-          <div className="profile-details">
-            <strong>{name}</strong>
-            <p>{user.email || user.phoneNumber || "WAYMARK student"}</p>
-            <small>Student profile synchronized</small>
-          </div>
-
-          <ShieldCheck className="verified-icon" />
-        </div>
-
-        <div className="dashboard-links">
-          <article>
-            <Compass />
-            <h3>Explore</h3>
-            <p>Discover educational possibilities and pathways.</p>
-          </article>
-
-          <article>
-            <GraduationCap />
-            <h3>Education</h3>
-            <p>Understand your academic position and next steps.</p>
-          </article>
-
-          <article>
-            <Sparkles />
-            <h3>Guidance</h3>
-            <p>Make informed decisions about your future.</p>
-          </article>
-        </div>
-
-        <section className="student-overview">
-          <div className="section-heading">
-            <span className="eyebrow">YOUR STUDENT IDENTITY</span>
-            <h2>Your academic profile</h2>
-          </div>
-
-          <div className="overview-grid">
-            <article>
-              <GraduationCap size={20} />
-              <span>Education level</span>
-              <strong>{educationLevel}</strong>
-            </article>
-
-            <article>
-              <BookOpen size={20} />
-              <span>Interests</span>
-              <strong>{profile.interests?.length || 0} selected</strong>
-            </article>
-
-            <article>
-              <Target size={20} />
-              <span>Goals</span>
-              <strong>{profile.goals?.length || 0} selected</strong>
-            </article>
-
-            <article>
-              <MapPin size={20} />
-              <span>Preferred locations</span>
-              <strong>{profile.preferredStates?.length || 0} selected</strong>
-            </article>
-          </div>
-
-          {profile.stream && (
-            <p className="profile-extra">
-              <strong>Academic stream:</strong> {profile.stream}
-            </p>
-          )}
-
-          {profile.interests?.length > 0 && (
-            <div className="profile-extra">
-              <strong>Your interests</strong>
-              <p>{profile.interests.join(" · ")}</p>
-            </div>
-          )}
-
-          {profile.goals?.length > 0 && (
-            <div className="profile-extra">
-              <strong>Your goals</strong>
-              <p>{profile.goals.join(" · ")}</p>
-            </div>
-          )}
-
-          {profile.preferredStates?.length > 0 && (
-            <div className="profile-extra">
-              <strong>Preferred states</strong>
-              <p>{profile.preferredStates.join(" · ")}</p>
-            </div>
-          )}
-        </section>
-
-        <section className="catalogue-status">
-          <span className="eyebrow">WAYMARK INTELLIGENCE</span>
-          <h2>Discover what comes next.</h2>
-          <p>
-            Your student profile is ready. Verified courses,
-            institutions, scholarships and opportunities will
-            appear as the official catalogue is populated.
-          </p>
-          <small>
-            WAYMARK only treats records marked as verified
-            as confirmed educational information.
-          </small>
-        </section>
       </section>
     </main>
   );
@@ -277,8 +78,9 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
 
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [profileError, setProfileError] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState("");
 
   const [mode, setMode] = useState("email");
   const [step, setStep] = useState("identify");
@@ -291,6 +93,46 @@ export default function App() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  const clearMessages = useCallback(() => {
+    setError("");
+    setMessage("");
+  }, []);
+
+  const loadProfile = useCallback(async (currentUser) => {
+    if (!currentUser) {
+      setProfile(null);
+      setProfileError("");
+      return;
+    }
+
+    setProfileLoading(true);
+    setProfileError("");
+
+    try {
+      const existing = await getStudentProfile(currentUser.uid);
+
+      if (existing) {
+        setProfile(existing);
+      } else {
+        setProfile({
+          uid: currentUser.uid,
+          email: currentUser.email || null,
+          phoneNumber: currentUser.phoneNumber || null,
+          displayName: currentUser.displayName || null,
+          photoURL: currentUser.photoURL || null,
+          onboardingCompleted: false
+        });
+      }
+    } catch (err) {
+      console.error("WAYMARK profile loading failed:", err);
+      setProfileError(
+        err?.message || "Unable to load your student profile."
+      );
+    } finally {
+      setProfileLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     let active = true;
 
@@ -299,30 +141,45 @@ export default function App() {
 
       setUser(currentUser);
       setProfile(null);
-      setProfileError(false);
+      setProfileError("");
 
       if (!currentUser) {
         setProfileLoading(false);
+        setAuthReady(true);
         return;
       }
 
       setProfileLoading(true);
 
       try {
-        const studentProfile = await syncUserProfile(currentUser);
+        const existing = await getStudentProfile(currentUser.uid);
 
         if (!active) return;
 
-        setProfile(studentProfile);
+        if (existing) {
+          setProfile(existing);
+        } else {
+          setProfile({
+            uid: currentUser.uid,
+            email: currentUser.email || null,
+            phoneNumber: currentUser.phoneNumber || null,
+            displayName: currentUser.displayName || null,
+            photoURL: currentUser.photoURL || null,
+            onboardingCompleted: false
+          });
+        }
       } catch (err) {
-        console.error("Profile synchronization failed:", err);
+        console.error("WAYMARK profile loading failed:", err);
 
         if (active) {
-          setProfileError(true);
+          setProfileError(
+            err?.message || "Unable to load your student profile."
+          );
         }
       } finally {
         if (active) {
           setProfileLoading(false);
+          setAuthReady(true);
         }
       }
     });
@@ -333,11 +190,6 @@ export default function App() {
     };
   }, []);
 
-  function clearMessages() {
-    setError("");
-    setMessage("");
-  }
-
   async function execute(action) {
     setLoading(true);
     clearMessages();
@@ -345,8 +197,10 @@ export default function App() {
     try {
       await action();
     } catch (err) {
-      console.error(err);
-      setError(err.message || "Something went wrong. Please try again.");
+      console.error("WAYMARK authentication error:", err);
+      setError(
+        err?.message || "Something went wrong. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -354,7 +208,7 @@ export default function App() {
 
   function sendEmailCode() {
     if (!email.trim()) {
-      setError("Please enter your email address.");
+      setError("Enter your email address.");
       return;
     }
 
@@ -375,13 +229,15 @@ export default function App() {
   }
 
   function sendPhoneCode() {
-    if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
+    const normalizedPhone = phone.replace(/\s/g, "");
+
+    if (!/^\+[1-9]\d{7,14}$/.test(normalizedPhone)) {
       setError("Enter a valid phone number with country code.");
       return;
     }
 
     execute(async () => {
-      await requestPhoneOtp(phone.trim());
+      await requestPhoneOtp(normalizedPhone);
       setStep("verify");
       setMessage("SMS verification code sent.");
     });
@@ -401,14 +257,17 @@ export default function App() {
   }
 
   async function signOutUser() {
-    await execute(async () => {
+    try {
       await logout();
-
       setProfile(null);
-      setCode("");
+      setProfileError("");
       setStep("identify");
+      setCode("");
       clearMessages();
-    });
+    } catch (err) {
+      console.error("Sign out failed:", err);
+      setError("Unable to sign out. Please try again.");
+    }
   }
 
   function changeMode(nextMode) {
@@ -418,61 +277,50 @@ export default function App() {
     setCode("");
   }
 
-  async function retryProfileSync() {
+  async function retryProfile() {
     if (!user) return;
-
-    setProfileLoading(true);
-    setProfileError(false);
-
-    try {
-      const studentProfile = await syncUserProfile(user);
-      setProfile(studentProfile);
-    } catch (err) {
-      console.error("Profile retry failed:", err);
-      setProfileError(true);
-    } finally {
-      setProfileLoading(false);
-    }
+    await loadProfile(user);
   }
 
-  // Authenticated application
+  if (!authReady) {
+    return <LoadingScreen message="Connecting to WAYMARK..." />;
+  }
 
   if (user) {
     if (profileLoading) {
-      return <LoadingScreen />;
+      return <LoadingScreen message="Loading your student profile..." />;
     }
 
-    if (profileError || !profile) {
+    if (profileError) {
       return (
         <ProfileError
-          onRetry={retryProfileSync}
+          onRetry={retryProfile}
           onLogout={signOutUser}
         />
       );
+    }
+
+    if (!profile) {
+      return <LoadingScreen message="Preparing your profile..." />;
     }
 
     if (!profile.onboardingCompleted) {
       return (
         <Onboarding
           user={user}
-          onComplete={(savedProfile) => {
-            setProfile(savedProfile);
-            clearMessages();
-          }}
+          onComplete={setProfile}
         />
       );
     }
 
     return (
-      <StudentDashboard
+      <IntelligenceDashboard
         user={user}
         profile={profile}
         onLogout={signOutUser}
       />
     );
   }
-
-  // Authentication application
 
   return (
     <main className="auth-layout">
@@ -572,7 +420,6 @@ export default function App() {
 
                   <div className="input-wrap">
                     <Mail size={18} />
-
                     <input
                       id="email"
                       type="email"
@@ -605,7 +452,6 @@ export default function App() {
 
                   <div className="input-wrap">
                     <Smartphone size={18} />
-
                     <input
                       id="phone"
                       type="tel"
@@ -649,7 +495,6 @@ export default function App() {
             <form
               onSubmit={(event) => {
                 event.preventDefault();
-
                 mode === "email"
                   ? verifyEmailCode()
                   : verifyPhoneCode();
@@ -661,7 +506,6 @@ export default function App() {
 
               <div className="input-wrap code-input">
                 <ShieldCheck size={18} />
-
                 <input
                   id="code"
                   type="text"
