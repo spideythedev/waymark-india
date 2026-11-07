@@ -33,6 +33,9 @@ import {
   serverTimestamp
 } from "firebase/firestore";
 
+import Onboarding from "./components/Onboarding";
+
+
 const features = [
   "Explore thousands of educational pathways",
   "Discover institutions and opportunities",
