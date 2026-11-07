@@ -103,3 +103,97 @@ export const OFFICIAL_SOURCES = [
     domain: "Joint seat allocation"
   }
 ];
+
+export const STUDENT_LEVELS = [
+  { id: "class-10", label: "Class 10" },
+  { id: "class-11", label: "Class 11" },
+  { id: "class-12", label: "Class 12" },
+  { id: "diploma", label: "Diploma" },
+  { id: "undergraduate", label: "Undergraduate" },
+  { id: "postgraduate", label: "Postgraduate" },
+  { id: "other", label: "Other" }
+];
+
+export const STUDENT_STREAMS = [
+  { id: "science-pcm", label: "Science — PCM" },
+  { id: "science-pcb", label: "Science — PCB" },
+  { id: "science-pcmb", label: "Science — PCMB" },
+  { id: "commerce", label: "Commerce" },
+  { id: "humanities", label: "Humanities / Arts" },
+  { id: "vocational", label: "Vocational" },
+  { id: "not-decided", label: "Not decided" }
+];
+
+export const STUDENT_INTERESTS = [
+  "Computer Science",
+  "Artificial Intelligence",
+  "Engineering",
+  "Medicine",
+  "Biotechnology",
+  "Physics",
+  "Mathematics",
+  "Business",
+  "Economics",
+  "Law",
+  "Psychology",
+  "Design",
+  "Architecture",
+  "Research",
+  "Agriculture",
+  "Humanities",
+  "Creative Arts",
+  "Entrepreneurship",
+  "Public Service",
+  "Other"
+];
+
+export const STUDENT_GOALS = [
+  "University admission",
+  "Competitive examinations",
+  "Professional career",
+  "Research and innovation",
+  "Entrepreneurship",
+  "Study abroad",
+  "Skill development",
+  "Still exploring"
+];
+
+export const INDIAN_STATES = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry"
+];
+
