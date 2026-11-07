@@ -1,0 +1,37 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{userId} {
+      allow read: if request.auth != null
+        && request.auth.uid == userId;
+
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.keys().hasOnly([
+          "uid",
+          "email",
+          "phoneNumber",
+          "displayName",
+          "photoURL",
+          "createdAt",
+          "lastLoginAt"
+        ]);
+
+      allow delete: if false;
+    }
+
+    // OTP records are accessible only through trusted backend code.
+    match /emailOtps/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Other collections remain closed until their rules are designed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
